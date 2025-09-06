@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, TrendingUp, ShoppingBag, Leaf, Eye, Star } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import ProductCard from '../components/ProductCard';
 
 const Dashboard: React.FC = () => {
-  const { state } = useApp();
+  const { state, loadProducts, loadPurchases } = useApp();
+  const dataLoaded = useRef(false);
+
+  useEffect(() => {
+    if (state.user && !dataLoaded.current) {
+      dataLoaded.current = true;
+      loadProducts();
+      loadPurchases();
+    }
+  }, [state.user]);
 
   if (!state.user) {
     return (
@@ -18,8 +27,19 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const userListings = state.products.filter(product => product.sellerId === state.user?.id);
-  const recentProducts = state.products.slice(0, 3);
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userListings = Array.isArray(state.products) ? state.products.filter(product => product.userId === state.user?._id) : [];
+  const recentProducts = Array.isArray(state.products) ? state.products.slice(0, 3) : [];
 
   const stats = [
     {
@@ -30,13 +50,13 @@ const Dashboard: React.FC = () => {
     },
     {
       name: 'Items Purchased',
-      value: state.purchases.length,
+      value: Array.isArray(state.purchases) ? state.purchases.length : 0,
       icon: ShoppingBag,
       color: 'bg-green-500'
     },
     {
       name: 'Eco Points',
-      value: state.user.ecoPoints,
+      value: state.user?.ecoPoints || 0,
       icon: Leaf,
       color: 'bg-emerald-500'
     },
@@ -133,7 +153,7 @@ const Dashboard: React.FC = () => {
             <div className="space-y-4">
               {recentProducts.length > 0 ? (
                 recentProducts.map((product) => (
-                  <div key={product.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                  <div key={product._id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
                     <img
                       src={product.image}
                       alt={product.title}
@@ -169,7 +189,7 @@ const Dashboard: React.FC = () => {
                   <h3 className="font-medium text-blue-900">Items Rescued</h3>
                   <p className="text-sm text-blue-600">Saved from landfill</p>
                 </div>
-                <p className="text-2xl font-bold text-blue-600">{state.purchases.length + userListings.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{(Array.isArray(state.purchases) ? state.purchases.length : 0) + userListings.length}</p>
               </div>
 
               <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg">

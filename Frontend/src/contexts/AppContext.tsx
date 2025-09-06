@@ -111,48 +111,48 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_PRODUCTS':
       return { ...state, products: action.payload };
     case 'ADD_PRODUCT':
-      return { ...state, products: [...state.products, action.payload] };
+      return { ...state, products: [...(Array.isArray(state.products) ? state.products : []), action.payload] };
     case 'UPDATE_PRODUCT':
       return {
         ...state,
-        products: state.products.map(p => p._id === action.payload._id ? action.payload : p)
+        products: Array.isArray(state.products) ? state.products.map(p => p._id === action.payload._id ? action.payload : p) : []
       };
     case 'DELETE_PRODUCT':
       return {
         ...state,
-        products: state.products.filter(p => p._id !== action.payload)
+        products: Array.isArray(state.products) ? state.products.filter(p => p._id !== action.payload) : []
       };
     case 'SET_CART':
       return { ...state, cart: action.payload };
     case 'ADD_TO_CART':
-      const existingItem = state.cart.find(item => item.productId === action.payload.productId);
+      const existingItem = Array.isArray(state.cart) ? state.cart.find(item => item.productId === action.payload.productId) : null;
       if (existingItem) {
         return {
           ...state,
-          cart: state.cart.map(item =>
+          cart: Array.isArray(state.cart) ? state.cart.map(item =>
             item.productId === action.payload.productId
               ? { ...item, quantity: item.quantity + action.payload.quantity }
               : item
-          )
+          ) : []
         };
       }
       return {
         ...state,
-        cart: [...state.cart, action.payload]
+        cart: [...(Array.isArray(state.cart) ? state.cart : []), action.payload]
       };
     case 'UPDATE_CART_ITEM':
       return {
         ...state,
-        cart: state.cart.map(item =>
+        cart: Array.isArray(state.cart) ? state.cart.map(item =>
           item.productId === action.payload.productId
             ? { ...item, quantity: action.payload.quantity }
             : item
-        )
+        ) : []
       };
     case 'REMOVE_FROM_CART':
       return {
         ...state,
-        cart: state.cart.filter(item => item.productId !== action.payload)
+        cart: Array.isArray(state.cart) ? state.cart.filter(item => item.productId !== action.payload) : []
       };
     case 'CLEAR_CART':
       return { ...state, cart: [] };
@@ -161,7 +161,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_PURCHASE':
       return {
         ...state,
-        purchases: [...state.purchases, action.payload],
+        purchases: [...(Array.isArray(state.purchases) ? state.purchases : []), action.payload],
         user: state.user ? {
           ...state.user,
           ecoPoints: state.user.ecoPoints + action.payload.ecoPointsGained
@@ -300,9 +300,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetchProducts(params);
       if (response.data.success) {
-        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data.products || response.data.data });
+        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data.products || response.data.data || [] });
       }
     } catch (error: any) {
+      console.error('Failed to load products:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load products' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -314,9 +315,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await getUserProducts();
       if (response.data.success) {
-        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data });
+        // Backend returns { data: { products: [...] } }
+        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data.products || [] });
       }
     } catch (error: any) {
+      console.error('Failed to load user products:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load user products' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -444,9 +447,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await getPurchases();
       if (response.data.success) {
-        dispatch({ type: 'SET_PURCHASES', payload: response.data.data });
+        dispatch({ type: 'SET_PURCHASES', payload: response.data.data || [] });
       }
     } catch (error: any) {
+      console.error('Failed to load purchases:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load purchases' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });

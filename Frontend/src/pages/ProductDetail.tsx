@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, User, Calendar, Tag } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
@@ -6,9 +6,28 @@ import { useApp } from '../contexts/AppContext';
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { state, dispatch } = useApp();
+  const { state, dispatch, loadProducts, addProductToCart } = useApp();
+  const dataLoaded = useRef(false);
 
-  const product = state.products.find(p => p.id === id);
+  useEffect(() => {
+    if (state.user && !dataLoaded.current) {
+      dataLoaded.current = true;
+      loadProducts();
+    }
+  }, [state.user]);
+
+  const product = Array.isArray(state.products) ? state.products.find(p => p._id === id) : null;
+
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -26,14 +45,18 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (state.user) {
-      dispatch({ type: 'ADD_TO_CART', payload: product });
-      // Show success message (could use toast notification)
+      try {
+        await addProductToCart(product._id, 1);
+        // Show success message (could use toast notification)
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+      }
     }
   };
 
-  const isOwn = state.user?.id === product.sellerId;
+  const isOwn = state.user?._id === product.userId;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,10 +181,10 @@ const ProductDetail: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Items</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {state.products
-              .filter(p => p.category === product.category && p.id !== product.id)
+              .filter(p => p.category === product.category && p._id !== product._id)
               .slice(0, 4)
               .map((relatedProduct) => (
-                <div key={relatedProduct.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div key={relatedProduct._id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                   <img
                     src={relatedProduct.image}
                     alt={relatedProduct.title}
