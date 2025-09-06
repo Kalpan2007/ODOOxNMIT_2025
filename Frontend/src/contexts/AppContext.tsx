@@ -211,6 +211,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  useEffect(() => {
+    // Load user profile and products on app start if user is logged in
+    const loadInitialData = async () => {
+      if (!state.user) {
+        try {
+          const profileResponse = await getProfile();
+          if (profileResponse.data.success) {
+            dispatch({ type: 'SET_USER', payload: profileResponse.data.data });
+          }
+          const productsResponse = await fetchProducts();
+          if (productsResponse.data.success) {
+            dispatch({ type: 'SET_PRODUCTS', payload: productsResponse.data.data });
+          }
+          await loadCart();
+        } catch (error) {
+          console.error('Failed to load initial data:', error);
+        }
+      }
+    };
+    loadInitialData();
+  }, []);
+
   // API Functions
   const loginUser = async (email: string, password: string) => {
     try {
@@ -385,7 +407,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addProductToCart = async (productId: string, quantity: number) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await addToCart({ productId, quantity });
+      // Fix: use _id for productId
+      const response = await addToCart({ _id: productId, quantity });
       if (response.data.success) {
         dispatch({ type: 'ADD_TO_CART', payload: { productId, quantity } });
       }
