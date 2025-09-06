@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Leaf, Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const SignUp: React.FC = () => {
@@ -12,22 +12,27 @@ const SignUp: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const { dispatch } = useApp();
+  const { registerUser, state } = useApp();
   const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters long';
+    // Username validation (must match backend requirements)
+    if (formData.username.length < 3 || formData.username.length > 30) {
+      newErrors.username = 'Username must be between 3 and 30 characters';
+    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      newErrors.username = 'Username can only contain letters, numbers, and underscores';
     }
 
-    if (!formData.email.includes('@')) {
+    // Email validation
+    if (!formData.email.includes('@') || !formData.email.includes('.')) {
       newErrors.email = 'Please enter a valid email address';
     }
 
+    // Password validation
     if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters long';
     }
@@ -45,22 +50,21 @@ const SignUp: React.FC = () => {
     
     if (!validateForm()) return;
     
-    setIsLoading(true);
+    setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      const newUser = {
-        id: Date.now().toString(),
-        username: formData.username,
-        email: formData.email,
-        ecoPoints: 50, // Welcome bonus
-        avatar: ''
-      };
-
-      dispatch({ type: 'SET_USER', payload: newUser });
+    try {
+      await registerUser(formData.username, formData.email, formData.password);
       navigate('/dashboard');
-      setIsLoading(false);
-    }, 1000);
+    } catch (error: any) {
+      // Handle validation errors from backend
+      if (error.response?.data?.errors) {
+        const backendErrors = error.response.data.errors;
+        const errorMessages = backendErrors.map((err: any) => err.msg).join(', ');
+        setError(errorMessages);
+      } else {
+        setError(error.response?.data?.message || error.message || 'Registration failed. Please try again.');
+      }
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +105,14 @@ const SignUp: React.FC = () => {
           </p>
         </div>
         
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <span className="text-red-700">{error}</span>
+          </div>
+        )}
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -116,7 +128,7 @@ const SignUp: React.FC = () => {
                   className={`relative block w-full pl-10 pr-3 py-3 border ${
                     errors.username ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                  placeholder="Username"
+                  placeholder="Username (letters, numbers, underscores only)"
                   value={formData.username}
                   onChange={handleChange}
                 />
@@ -244,10 +256,10 @@ const SignUp: React.FC = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={state.loading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? (
+              {state.loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating account...

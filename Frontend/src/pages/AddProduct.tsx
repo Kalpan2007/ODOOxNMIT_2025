@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate();
-  const { state, dispatch } = useApp();
-  const [isLoading, setIsLoading] = useState(false);
+  const { state, createNewProduct } = useApp();
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -59,26 +59,22 @@ const AddProduct: React.FC = () => {
     if (!validateForm()) return;
     if (!state.user) return;
     
-    setIsLoading(true);
+    setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      const newProduct = {
-        id: Date.now().toString(),
+    try {
+      const productData = {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
         category: formData.category,
-        image: formData.image,
-        sellerId: state.user!.id,
-        sellerName: state.user!.username,
-        createdAt: new Date().toISOString()
+        image: formData.image
       };
 
-      dispatch({ type: 'ADD_PRODUCT', payload: newProduct });
+      await createNewProduct(productData);
       navigate('/my-listings');
-      setIsLoading(false);
-    }, 1000);
+    } catch (error: any) {
+      setError(error.message || 'Failed to create product. Please try again.');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -128,6 +124,14 @@ const AddProduct: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">List Your Item</h1>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <span className="text-red-700">{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
@@ -274,10 +278,10 @@ const AddProduct: React.FC = () => {
             <div className="flex space-x-4">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={state.loading}
                 className="flex-1 flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? (
+                {state.loading ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Listing Item...

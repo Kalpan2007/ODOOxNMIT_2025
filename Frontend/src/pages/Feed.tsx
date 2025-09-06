@@ -1,16 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, Filter } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import ProductCard from '../components/ProductCard';
 import CategoryFilter from '../components/CategoryFilter';
 
 const Feed: React.FC = () => {
-  const { state } = useApp();
+  const { state, loadProducts } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const dataLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!dataLoaded.current) {
+      dataLoaded.current = true;
+      loadProducts();
+    }
+  }, []); // Remove function dependency to prevent infinite loop
 
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(state.products)) return [];
+    
     return state.products.filter(product => {
       const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchTerm.toLowerCase());

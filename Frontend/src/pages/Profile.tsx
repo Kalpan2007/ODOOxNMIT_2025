@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Mail, Star, Edit, Settings, Award } from 'lucide-react';
+import { User, Mail, Star, Edit, Settings, Award, RefreshCw } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const Profile: React.FC = () => {
-  const { state } = useApp();
+  const { state, loadUserProfile, loadUserProducts, loadPurchases } = useApp();
+  const dataLoaded = useRef(false);
+
+  const handleRefresh = () => {
+    dataLoaded.current = false;
+    loadUserProducts();
+    loadPurchases();
+  };
+
+  useEffect(() => {
+    if (state.user && !state.loading && !dataLoaded.current) {
+      dataLoaded.current = true;
+      loadUserProducts();
+      loadPurchases();
+    }
+  }, [state.user]); // Remove the function dependencies to prevent infinite loop
 
   if (!state.user) {
     return (
@@ -17,13 +32,26 @@ const Profile: React.FC = () => {
     );
   }
 
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   const userStats = {
-    itemsListed: state.products.filter(p => p.sellerId === state.user.id).length,
-    itemsPurchased: state.purchases.length,
-    totalSpent: state.purchases.reduce((sum, purchase) => sum + purchase.total, 0),
-    totalEarned: state.products
-      .filter(p => p.sellerId === state.user.id)
-      .reduce((sum, product) => sum + product.price, 0) * 0.1 // Assume 10% are sold
+    itemsListed: Array.isArray(state.products) ? state.products.filter(p => p.userId === state.user?._id).length : 0,
+    itemsPurchased: Array.isArray(state.purchases) ? state.purchases.length : 0,
+    totalSpent: Array.isArray(state.purchases) ? state.purchases.reduce((sum, purchase) => sum + purchase.totalAmount, 0) : 0,
+    totalEarned: Array.isArray(state.products) 
+      ? state.products
+          .filter(p => p.userId === state.user?._id)
+          .reduce((sum, product) => sum + product.price, 0) * 0.1 // Assume 10% are sold
+      : 0
   };
 
   return (
@@ -61,6 +89,14 @@ const Profile: React.FC = () => {
               </div>
             </div>
             <div className="mt-6 md:mt-0 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+              <button
+                onClick={handleRefresh}
+                disabled={state.loading}
+                className="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${state.loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
               <Link
                 to="/edit-profile"
                 className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

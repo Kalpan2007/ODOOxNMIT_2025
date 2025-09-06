@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Leaf, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Leaf, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const Login: React.FC = () => {
@@ -9,29 +9,27 @@ const Login: React.FC = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { dispatch } = useApp();
+  const [error, setError] = useState('');
+  const { loginUser, state } = useApp();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock user login - in real app, validate credentials
-      const mockUser = {
-        id: '1',
-        username: 'EcoUser',
-        email: formData.email,
-        ecoPoints: 150,
-        avatar: ''
-      };
-
-      dispatch({ type: 'SET_USER', payload: mockUser });
+    try {
+      await loginUser(formData.email, formData.password);
       navigate('/dashboard');
-      setIsLoading(false);
-    }, 1000);
+    } catch (error: any) {
+      // Handle validation errors from backend
+      if (error.response?.data?.errors) {
+        const backendErrors = error.response.data.errors;
+        const errorMessages = backendErrors.map((err: any) => err.msg).join(', ');
+        setError(errorMessages);
+      } else {
+        setError(error.response?.data?.message || error.message || 'Login failed. Please try again.');
+      }
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +62,14 @@ const Login: React.FC = () => {
           </p>
         </div>
         
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <span className="text-red-700">{error}</span>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
@@ -144,10 +150,10 @@ const Login: React.FC = () => {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={state.loading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? (
+              {state.loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Signing in...

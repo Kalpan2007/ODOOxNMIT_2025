@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import ProductCard from '../components/ProductCard';
 
 const MyListings: React.FC = () => {
-  const { state, dispatch } = useApp();
+  const { state, loadUserProducts, deleteExistingProduct } = useApp();
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
+  const dataLoaded = useRef(false);
+
+  useEffect(() => {
+    if (state.user && !state.loading && !dataLoaded.current) {
+      dataLoaded.current = true;
+      loadUserProducts();
+    }
+  }, [state.user]); // Remove function dependency to prevent infinite loop
 
   if (!state.user) {
     return (
@@ -20,20 +28,24 @@ const MyListings: React.FC = () => {
     );
   }
 
-  const userListings = state.products.filter(product => product.sellerId === state.user?.id);
+  const userListings = Array.isArray(state.products) ? state.products.filter(product => product.userId === state.user?._id) : [];
 
   const handleEdit = (product: any) => {
-    navigate(`/edit-product/${product.id}`);
+    navigate(`/edit-product/${product._id}`);
   };
 
   const handleDelete = (productId: string) => {
     setShowDeleteModal(productId);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (showDeleteModal) {
-      dispatch({ type: 'DELETE_PRODUCT', payload: showDeleteModal });
-      setShowDeleteModal(null);
+      try {
+        await deleteExistingProduct(showDeleteModal);
+        setShowDeleteModal(null);
+      } catch (error) {
+        console.error('Failed to delete product:', error);
+      }
     }
   };
 

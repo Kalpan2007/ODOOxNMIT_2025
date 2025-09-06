@@ -17,13 +17,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onEdit, 
   onDelete 
 }) => {
-  const { state, dispatch } = useApp();
+  const { state, addProductToCart } = useApp();
   
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (state.user) {
-      dispatch({ type: 'ADD_TO_CART', payload: product });
+      try {
+        await addProductToCart(product._id, 1);
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+      }
     }
   };
 
@@ -36,14 +40,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (onDelete) onDelete(product.id);
+    if (onDelete) onDelete(product._id);
   };
 
-  const isOwn = state.user?.id === product.sellerId;
+  const isOwn = state.user?._id === product.userId;
 
   return (
-    <Link to={`/product/${product.id}`} className="block group">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group-hover:scale-[1.02] transform transition-transform">
+    <Link to={`/product/${product._id}`} className="block group">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg group-hover:scale-[1.02] transform transition-all duration-300">
         {/* Product Image */}
         <div className="aspect-w-1 aspect-h-1 h-48 overflow-hidden bg-gray-200">
           <img

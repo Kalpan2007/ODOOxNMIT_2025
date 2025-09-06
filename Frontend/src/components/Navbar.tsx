@@ -5,17 +5,17 @@ import { useApp } from '../contexts/AppContext';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { state, dispatch } = useApp();
+  const { state, logoutUser } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch({ type: 'SET_USER', payload: null });
+    logoutUser();
     navigate('/');
     setIsOpen(false);
   };
 
-  const cartItemsCount = state.cart.reduce((total, item) => total + item.quantity, 0);
+  const cartItemsCount = Array.isArray(state.cart) ? state.cart.reduce((total, item) => total + item.quantity, 0) : 0;
 
   const isActive = (path: string) => location.pathname === path;
 

@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const Cart: React.FC = () => {
-  const { state, dispatch } = useApp();
+  const { state, loadCart, updateCartItemQuantity, removeProductFromCart, processCheckout } = useApp();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (state.user) {
+      loadCart();
+    }
+  }, [state.user, loadCart]);
 
   if (!state.user) {
     return (
@@ -18,30 +24,39 @@ const Cart: React.FC = () => {
     );
   }
 
-  const handleRemoveFromCart = (productId: string) => {
-    dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
+  const handleRemoveFromCart = async (productId: string) => {
+    try {
+      await removeProductFromCart(productId);
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+    }
   };
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
     if (newQuantity === 0) {
-      handleRemoveFromCart(productId);
+      await handleRemoveFromCart(productId);
     } else {
-      // For simplicity, we'll remove and re-add with new quantity
-      const item = state.cart.find(item => item.product.id === productId);
-      if (item) {
-        dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
-        for (let i = 0; i < newQuantity; i++) {
-          dispatch({ type: 'ADD_TO_CART', payload: item.product });
-        }
+      try {
+        await updateCartItemQuantity(productId, newQuantity);
+      } catch (error) {
+        console.error('Failed to update cart item:', error);
       }
     }
   };
 
-  const totalAmount = state.cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-  const totalItems = state.cart.reduce((total, item) => total + item.quantity, 0);
+  const totalAmount = Array.isArray(state.cart) ? state.cart.reduce((total, item) => {
+    const product = item.product;
+    return total + (product ? product.price * item.quantity : 0);
+  }, 0) : 0;
+  const totalItems = Array.isArray(state.cart) ? state.cart.reduce((total, item) => total + item.quantity, 0) : 0;
 
-  const handleCheckout = () => {
-    navigate('/checkout');
+  const handleCheckout = async () => {
+    try {
+      await processCheckout();
+      navigate('/purchase-success');
+    } catch (error) {
+      console.error('Checkout failed:', error);
+    }
   };
 
   return (
@@ -69,64 +84,69 @@ const Cart: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="p-6">
                   <div className="space-y-6">
-                    {state.cart.map((item) => (
-                      <div key={item.product.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                        <div className="flex-shrink-0">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.title}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <Link 
-                            to={`/product/${item.product.id}`}
-                            className="font-medium text-gray-900 hover:text-green-600 transition-colors"
-                          >
-                            {item.product.title}
-                          </Link>
-                          <p className="text-sm text-gray-500 mt-1">{item.product.category}</p>
-                          <p className="text-sm text-gray-500">Sold by {item.product.sellerName}</p>
-                        </div>
-
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-2 bg-white rounded-lg border border-gray-300">
-                            <button
-                              onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
-                              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="px-3 py-2 text-gray-900 font-medium">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
+                    {Array.isArray(state.cart) && state.cart.map((item) => {
+                      const product = item.product;
+                      if (!product) return null;
+                      
+                      return (
+                        <div key={item.productId} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex-shrink-0">
+                            <img
+                              src={product.image}
+                              alt={product.title}
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
                           </div>
                           
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">
-                              ${(item.product.price * item.quantity).toFixed(2)}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              ${item.product.price} each
-                            </p>
+                          <div className="flex-1 min-w-0">
+                            <Link 
+                              to={`/product/${product._id}`}
+                              className="font-medium text-gray-900 hover:text-green-600 transition-colors"
+                            >
+                              {product.title}
+                            </Link>
+                            <p className="text-sm text-gray-500 mt-1">{product.category}</p>
+                            <p className="text-sm text-gray-500">Sold by {product.sellerName}</p>
                           </div>
 
-                          <button
-                            onClick={() => handleRemoveFromCart(item.product.id)}
-                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2 bg-white rounded-lg border border-gray-300">
+                              <button
+                                onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="px-3 py-2 text-gray-900 font-medium">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            
+                            <div className="text-right">
+                              <p className="font-medium text-gray-900">
+                                ${(product.price * item.quantity).toFixed(2)}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                ${product.price} each
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => handleRemoveFromCart(item.productId)}
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
