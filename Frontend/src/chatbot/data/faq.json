@@ -1,0 +1,34 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "question": "How do I buy products on EcoFinds?",
+      "answer": "Simply browse our marketplace, click on items you like, and use our secure checkout process. All products are verified for quality before listing!",
+      "keywords": ["buy", "purchase", "how to buy", "checkout", "payment"]
+    },
+    {
+      "id": 2,
+      "question": "How can I sell my items?",
+      "answer": "Create a seller account, upload photos of your items, set fair prices, and list them! Our eco-community will help your items find new homes.",
+      "keywords": ["sell", "listing", "how to sell", "seller", "upload"]
+    },
+    {
+      "id": 3,
+      "question": "Why choose second-hand shopping?",
+      "answer": "Second-hand shopping reduces waste, saves money, and supports circular economy. Every purchase helps keep items out of landfills!",
+      "keywords": ["why", "second-hand", "benefits", "sustainable", "circular economy"]
+    },
+    {
+      "id": 4,
+      "question": "Are the products verified for quality?",
+      "answer": "Yes! All sellers must provide detailed descriptions and photos. We have a rating system and return policy for quality assurance.",
+      "keywords": ["quality", "verified", "return", "guarantee", "ratings"]
+    },
+    {
+      "id": 5,
+      "question": "What is EcoFinds' mission?",
+      "answer": "Our mission is to create a sustainable marketplace where people can buy and sell pre-loved items, reducing waste and promoting conscious consumption.",
+      "keywords": ["mission", "purpose", "about", "ecofinds", "vision"]
+    }
+  ]
+}

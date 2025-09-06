@@ -1,0 +1,77 @@
+{
+  "general_qa": [
+    {
+      "id": 1,
+      "question": "What is artificial intelligence?",
+      "answer": "🤖 AI is technology that enables machines to simulate human intelligence, like learning and problem-solving. I use AI to understand your questions and help you find sustainable products!",
+      "keywords": ["ai", "artificial intelligence", "machine learning", "technology"]
+    },
+    {
+      "id": 2,
+      "question": "How does online shopping work?",
+      "answer": "🛒 Online shopping lets you browse products digitally, add items to cart, and checkout securely. On EcoFinds, we make it easy to find sustainable second-hand treasures!",
+      "keywords": ["online shopping", "ecommerce", "shopping", "buy online"]
+    },
+    {
+      "id": 3,
+      "question": "What is climate change?",
+      "answer": "🌍 Climate change refers to long-term shifts in global temperatures and weather patterns. Shopping second-hand helps reduce carbon emissions and combat climate change!",
+      "keywords": ["climate change", "global warming", "environment", "carbon emissions"]
+    },
+    {
+      "id": 4,
+      "question": "How to save money?",
+      "answer": "💰 Great ways to save money include buying second-hand items, comparing prices, and avoiding impulse purchases. EcoFinds helps you save while being eco-friendly!",
+      "keywords": ["save money", "budget", "financial tips", "cheap", "affordable"]
+    },
+    {
+      "id": 5,
+      "question": "What is recycling?",
+      "answer": "♻️ Recycling transforms waste materials into new products, reducing landfill waste. Buying second-hand is even better - it's reusing items before they need recycling!",
+      "keywords": ["recycling", "waste management", "reuse", "circular economy"]
+    },
+    {
+      "id": 6,
+      "question": "How to start a business?",
+      "answer": "🚀 Starting a business involves planning, research, and execution. You can start by selling items you no longer need on EcoFinds - it's a great way to begin!",
+      "keywords": ["business", "startup", "entrepreneur", "selling"]
+    },
+    {
+      "id": 7,
+      "question": "What is sustainable living?",
+      "answer": "🌱 Sustainable living means making choices that don't harm the environment for future generations. This includes buying second-hand, reducing waste, and choosing eco-friendly options!",
+      "keywords": ["sustainable living", "eco-friendly", "green lifestyle", "sustainability"]
+    },
+    {
+      "id": 8,
+      "question": "How to reduce plastic waste?",
+      "answer": "🚫 Reduce plastic by using reusable bags, bottles, and containers. Buy second-hand items to avoid new plastic packaging. Every small action counts!",
+      "keywords": ["plastic waste", "reduce plastic", "plastic pollution", "reusable"]
+    }
+  ],
+  "creator_info": [
+    {
+      "question": "Who created you?",
+      "answer": "👨‍💻 I'm EcoBuddy, created with love by **Dax Patel**! He's a passionate developer dedicated to building technology that helps protect our environment. I'm powered by EcoFinds and designed to make sustainable shopping fun and easy! 🌱",
+      "keywords": ["creator", "made", "built", "developer", "dax patel"]
+    },
+    {
+      "question": "Who is Dax Patel?",
+      "answer": "🌟 Dax Patel is my creator - a talented developer who believes technology can make the world more sustainable! He built me to help people discover amazing second-hand products and learn about eco-friendly living. He's dedicated to protecting our environment through innovative solutions! 💚",
+      "keywords": ["dax patel", "developer", "creator", "founder"]
+    },
+    {
+      "question": "Tell me about your developer",
+      "answer": "👨‍💻 My developer Dax Patel is amazing! He's passionate about combining technology with environmental consciousness. He created me as part of the EcoFinds platform to help people make sustainable choices. His vision is to use AI and technology to build a more eco-friendly future! 🌍",
+      "keywords": ["developer", "dax", "creator", "founder", "maker"]
+    }
+  ],
+  "no_answer_responses": [
+    "🤔 Hmm, that's a great question! I'm still learning about that topic. Could you try asking about sustainable products, eco-tips, or EcoFinds features instead?",
+    "🌱 I don't have specific information about that right now, but I'm always growing my knowledge! How about I help you find some amazing second-hand products instead?",
+    "💭 That's interesting! While I don't have details on that particular topic, I'd love to help you with sustainable shopping, eco-friendly tips, or EcoFinds platform questions!",
+    "🔍 I'm not quite sure about that one yet! My expertise is in sustainable shopping and eco-friendly living. What would you like to know about EcoFinds or green lifestyle tips?",
+    "🌿 Great question! I'm still expanding my knowledge on that topic. Meanwhile, I can help you discover amazing second-hand treasures or share sustainability tips!",
+    "💚 I don't have specific information about that right now, but I'm here to help with eco-friendly shopping and sustainable living tips! What else can I assist you with?"
+  ]
+}
