@@ -28,6 +28,17 @@ const MyListings: React.FC = () => {
     );
   }
 
+  if (state.loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your listings...</p>
+        </div>
+      </div>
+    );
+  }
+
   const userListings = Array.isArray(state.products) ? state.products.filter(product => product.userId === state.user?._id) : [];
 
   const handleEdit = (product: any) => {
@@ -130,7 +141,7 @@ const MyListings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userListings.map((product) => (
               <ProductCard
-                key={product.id}
+                key={product._id}
                 product={product}
                 showActions={true}
                 onEdit={handleEdit}

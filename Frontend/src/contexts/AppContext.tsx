@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { 
   register, 
   login, 
@@ -78,11 +78,12 @@ type AppAction =
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_USER'; payload: User | null }
   | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | { type: 'SET_USER_PRODUCTS'; payload: Product[] }
   | { type: 'ADD_PRODUCT'; payload: Product }
   | { type: 'UPDATE_PRODUCT'; payload: Product }
   | { type: 'DELETE_PRODUCT'; payload: string }
   | { type: 'SET_CART'; payload: CartItem[] }
-  | { type: 'ADD_TO_CART'; payload: CartItem }
+  | { type: 'ADD_TO_CART'; payload: { productId: string; quantity: number } }
   | { type: 'UPDATE_CART_ITEM'; payload: { productId: string; quantity: number } }
   | { type: 'REMOVE_FROM_CART'; payload: string }
   | { type: 'CLEAR_CART' }
@@ -111,48 +112,48 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_PRODUCTS':
       return { ...state, products: action.payload };
     case 'ADD_PRODUCT':
-      return { ...state, products: [...state.products, action.payload] };
+      return { ...state, products: [...(Array.isArray(state.products) ? state.products : []), action.payload] };
     case 'UPDATE_PRODUCT':
       return {
         ...state,
-        products: state.products.map(p => p._id === action.payload._id ? action.payload : p)
+        products: Array.isArray(state.products) ? state.products.map(p => p._id === action.payload._id ? action.payload : p) : []
       };
     case 'DELETE_PRODUCT':
       return {
         ...state,
-        products: state.products.filter(p => p._id !== action.payload)
+        products: Array.isArray(state.products) ? state.products.filter(p => p._id !== action.payload) : []
       };
     case 'SET_CART':
       return { ...state, cart: action.payload };
     case 'ADD_TO_CART':
-      const existingItem = state.cart.find(item => item.productId === action.payload.productId);
+      const existingItem = Array.isArray(state.cart) ? state.cart.find(item => item.productId === action.payload.productId) : null;
       if (existingItem) {
         return {
           ...state,
-          cart: state.cart.map(item =>
+          cart: Array.isArray(state.cart) ? state.cart.map(item =>
             item.productId === action.payload.productId
               ? { ...item, quantity: item.quantity + action.payload.quantity }
               : item
-          )
+          ) : []
         };
       }
       return {
         ...state,
-        cart: [...state.cart, action.payload]
+        cart: [...(Array.isArray(state.cart) ? state.cart : []), action.payload]
       };
     case 'UPDATE_CART_ITEM':
       return {
         ...state,
-        cart: state.cart.map(item =>
+        cart: Array.isArray(state.cart) ? state.cart.map(item =>
           item.productId === action.payload.productId
             ? { ...item, quantity: action.payload.quantity }
             : item
-        )
+        ) : []
       };
     case 'REMOVE_FROM_CART':
       return {
         ...state,
-        cart: state.cart.filter(item => item.productId !== action.payload)
+        cart: Array.isArray(state.cart) ? state.cart.filter(item => item.productId !== action.payload) : []
       };
     case 'CLEAR_CART':
       return { ...state, cart: [] };
@@ -161,7 +162,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_PURCHASE':
       return {
         ...state,
-        purchases: [...state.purchases, action.payload],
+        purchases: [...(Array.isArray(state.purchases) ? state.purchases : []), action.payload],
         user: state.user ? {
           ...state.user,
           ecoPoints: state.user.ecoPoints + action.payload.ecoPointsGained
@@ -203,13 +204,80 @@ const AppContext = createContext<{
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Check for existing token on app load
+  // Track if we've attempted to load initial data
+  const initialLoadRef = useRef(false);
+
+  // Load initial data on mount and when user changes
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      loadUserProfile();
-    }
-  }, []);
+    const loadInitialData = async () => {
+      // Prevent multiple initial loads
+      if (initialLoadRef.current) return;
+      initialLoadRef.current = true;
+      
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        
+        // Always load products, even if user is not authenticated
+        await loadProducts();
+        
+        // Check for existing token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('No auth token found, loading public data only');
+          return;
+        }
+        
+        console.log('Auth token found, loading user data...');
+        
+        // Load user profile
+        try {
+          const profileResponse = await getProfile();
+          if (profileResponse.data?.success) {
+            const user = profileResponse.data.data;
+            dispatch({ type: 'SET_USER', payload: user });
+            
+            // Load user-specific data in parallel
+            await Promise.all([
+              loadUserProducts(),
+              loadCart()
+            ]);
+          }
+        } catch (profileError) {
+          console.error('Error loading user profile:', profileError);
+          // If there's an error loading profile, clear the invalid token
+          if (profileError.response?.status === 401) {
+            console.log('Authentication failed, clearing token');
+            localStorage.removeItem('token');
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+        }
+      } catch (error) {
+        console.error('Error in initial data load:', error);
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: 'Failed to load initial data. Please refresh the page.' 
+        });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+    
+    loadInitialData();
+    
+    // Set up interval to refresh cart and products periodically
+    const refreshInterval = setInterval(() => {
+      if (state.user) {
+        console.log('Refreshing user data...');
+        loadCart().catch(e => console.error('Error refreshing cart:', e));
+        loadUserProducts().catch(e => console.error('Error refreshing products:', e));
+      }
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => {
+      clearInterval(refreshInterval);
+      initialLoadRef.current = false;
+    };
+  }, [state.user?._id]); // Only re-run if user changes
 
   // API Functions
   const loginUser = async (email: string, password: string) => {
@@ -300,24 +368,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetchProducts(params);
       if (response.data.success) {
-        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data.products || response.data.data });
+        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data.products || response.data.data || [] });
       }
     } catch (error: any) {
+      console.error('Failed to load products:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load products' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, []);
 
+  // Function to load products listed by the current user
   const loadUserProducts = useCallback(async () => {
     try {
+      console.log('Loading user products...');
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await getUserProducts();
+      console.log('User products response:', response.data);
+      
       if (response.data.success) {
-        dispatch({ type: 'SET_PRODUCTS', payload: response.data.data });
+        // Handle both response formats: { data: [...] } and { data: { products: [...] } }
+        const products = response.data.data.products || response.data.data || [];
+        dispatch({ type: 'SET_USER_PRODUCTS', payload: products });
+        return products;
       }
+      return [];
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load user products' });
+      console.error('Failed to load user products:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to load your products';
+      dispatch({ type: 'SET_ERROR', payload: errorMsg });
+      dispatch({ type: 'SET_USER_PRODUCTS', payload: [] });
+      return [];
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -368,26 +449,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loadCart = async () => {
+  // Function to load user's cart
+  const loadCart = useCallback(async () => {
     try {
+      console.log('Loading cart...');
       const response = await getCart();
+      console.log('Cart API Response:', response.data);
       if (response.data.success) {
-        dispatch({ type: 'SET_CART', payload: response.data.data.items || [] });
+        // Make sure we have an array of items
+        const cartItems = Array.isArray(response.data.data?.items) 
+          ? response.data.data.items 
+          : [];
+        console.log('Setting cart items:', cartItems);
+        dispatch({ type: 'SET_CART', payload: cartItems });
+        return cartItems;
       }
+      return [];
     } catch (error) {
       console.error('Failed to load cart:', error);
+      // Initialize empty cart if not loaded
+      dispatch({ type: 'SET_CART', payload: [] });
+      return [];
     }
-  };
+  }, []);
+
+
 
   const addProductToCart = async (productId: string, quantity: number) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await addToCart({ productId, quantity });
+      console.log('Adding to cart - Product ID:', productId, 'Quantity:', quantity);
+      
+      // Make sure we have a valid productId and quantity
+      if (!productId) {
+        throw new Error('Product ID is required');
+      }
+      
+      const qty = Number(quantity) || 1; // Default to 1 if quantity is invalid
+      
+      const response = await addToCart({ 
+        productId, 
+        quantity: qty
+      });
+      
+      console.log('Add to cart response:', response.data);
+      
       if (response.data.success) {
-        dispatch({ type: 'ADD_TO_CART', payload: { productId, quantity } });
+        // Refresh the cart after successful addition
+        await loadCart();
+        
+        // Show success message using a string
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: 'Product added to cart successfully' 
+        });
+        
+        return response.data;
+      } else {
+        throw new Error(response.data.message || 'Failed to add to cart');
       }
     } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to add to cart' });
+      console.error('Add to cart error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          data: error.config?.data,
+          headers: error.config?.headers
+        }
+      });
+      
+      const errorMessage = error.response?.data?.message || 'Failed to add to cart';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -444,9 +579,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await getPurchases();
       if (response.data.success) {
-        dispatch({ type: 'SET_PURCHASES', payload: response.data.data });
+        dispatch({ type: 'SET_PURCHASES', payload: response.data.data || [] });
       }
     } catch (error: any) {
+      console.error('Failed to load purchases:', error);
       dispatch({ type: 'SET_ERROR', payload: error.response?.data?.message || 'Failed to load purchases' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
