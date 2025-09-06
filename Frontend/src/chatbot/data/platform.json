@@ -1,0 +1,34 @@
+{
+  "platform": [
+    {
+      "id": 1,
+      "title": "About EcoFinds",
+      "content": "EcoFinds is India's premier sustainable second-hand marketplace, connecting conscious consumers with quality pre-loved items. We're building a circular economy one transaction at a time.",
+      "keywords": ["about", "ecofinds", "platform", "marketplace", "india"]
+    },
+    {
+      "id": 2,
+      "title": "Our Features",
+      "content": "Smart search, verified sellers, secure payments, quality ratings, eco-impact tracking, and community-driven marketplace features make EcoFinds the best choice for sustainable shopping.",
+      "keywords": ["features", "search", "sellers", "payments", "ratings", "community"]
+    },
+    {
+      "id": 3,
+      "title": "Environmental Impact",
+      "content": "Since launch, EcoFinds users have saved over 10 tons of items from landfills and prevented 50 tons of CO2 emissions. Together, we're making a real difference!",
+      "keywords": ["impact", "environment", "landfills", "co2", "emissions", "difference"]
+    },
+    {
+      "id": 4,
+      "title": "Community Guidelines",
+      "content": "We promote respectful trading, honest descriptions, fair pricing, and eco-conscious decisions. Our community values sustainability and trust.",
+      "keywords": ["community", "guidelines", "trading", "honest", "fair", "trust"]
+    },
+    {
+      "id": 5,
+      "title": "Categories Available",
+      "content": "Browse Electronics, Fashion, Furniture, Books, Sports, Home & Garden, Art & Collectibles, and more. New categories added based on community demand!",
+      "keywords": ["categories", "electronics", "fashion", "furniture", "books", "sports", "home", "art"]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './contexts/AppContext';
+import EcoBuddyChatbot from './chatbot';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 
@@ -101,6 +102,7 @@ const App: React.FC = () => {
   return (
     <AppProvider>
       <Router>
+        <EcoBuddyChatbot />
         <AppRoutes />
       </Router>
     </AppProvider>

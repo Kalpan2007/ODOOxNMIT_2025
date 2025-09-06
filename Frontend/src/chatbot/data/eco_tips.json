@@ -1,0 +1,40 @@
+{
+  "tips": [
+    {
+      "id": 1,
+      "title": "Reduce, Reuse, Recycle",
+      "content": "Follow the 3 R's hierarchy: First reduce consumption, then reuse items creatively, and finally recycle when necessary.",
+      "keywords": ["reduce", "reuse", "recycle", "3 r's", "waste"]
+    },
+    {
+      "id": 2,
+      "title": "Circular Economy Benefits",
+      "content": "Circular economy keeps resources in use longer, reduces waste, and creates economic value while protecting the environment.",
+      "keywords": ["circular economy", "resources", "environment", "sustainability"]
+    },
+    {
+      "id": 3,
+      "title": "Fast Fashion Impact",
+      "content": "The fashion industry produces 20% of global wastewater and 10% of carbon emissions. Buying second-hand clothes helps combat this!",
+      "keywords": ["fast fashion", "clothes", "fashion", "carbon", "wastewater"]
+    },
+    {
+      "id": 4,
+      "title": "Electronics Recycling",
+      "content": "E-waste contains precious metals and toxic materials. Buying refurbished electronics and proper recycling helps recover materials safely.",
+      "keywords": ["electronics", "e-waste", "recycling", "refurbished", "toxic"]
+    },
+    {
+      "id": 5,
+      "title": "Furniture Upcycling",
+      "content": "Give old furniture new life through upcycling! Sand, paint, and repair instead of buying new. It's creative and eco-friendly.",
+      "keywords": ["furniture", "upcycling", "repair", "paint", "creative"]
+    },
+    {
+      "id": 6,
+      "title": "Carbon Footprint Reduction",
+      "content": "Buying second-hand can reduce carbon footprint by up to 80% compared to new items. Every purchase makes a difference!",
+      "keywords": ["carbon footprint", "emissions", "climate", "difference", "impact"]
+    }
+  ]
+}
